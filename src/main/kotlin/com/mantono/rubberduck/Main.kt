@@ -28,23 +28,28 @@ fun main(args: Array<String>)
     http.get("/rubberduck")
     {
         status(200)
-        return@get parse(this.request)
+        val body: JsonNode =  parse(this.request)
 
-        val add: Int = rand.nextInt(20)
-        val total = s.addAndGet(add).also { if(it >= 100) s.set(0) }
-        when(total >= 100)
+        when(body["type"].asText())
         {
-            true -> makeSomeNoise()
-            false -> reactOn(this.request.body())
+            "url_verification" -> body["challenge"].asText()
+            else -> {
+                val add: Int = rand.nextInt(20)
+                val total = s.addAndGet(add).also { if(it >= 100) s.set(0) }
+                when(total >= 100)
+                {
+                    true -> makeSomeNoise()
+                    false -> reactOn(this.request.body())
+                }
+            }
         }
     }
 }
 
-private fun parse(request: Request): String
+private fun parse(request: Request): JsonNode
 {
     val objectMapper = ObjectMapper()
-    val node: JsonNode = objectMapper.readTree(request.body())
-    return node.get("challenge").asText()
+    return objectMapper.readTree(request.body())
 }
 
 val noises: Array<String> = arrayOf("quack!", "quaaaack", "quack quack", "uuhf...")
@@ -54,7 +59,7 @@ fun makeSomeNoise(): String = noises[rand.nextInt(noises.size)]
 fun reactOn(input: String): String = when(input)
 {
     ":heart:", "<3" -> ":heart:"
-    else -> ""
+    else -> "a"
 }
 
 
